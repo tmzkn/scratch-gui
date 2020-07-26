@@ -7,10 +7,7 @@ import VM from 'scratch-vm';
 import {injectIntl, intlShape} from 'react-intl';
 
 import ErrorBoundaryHOC from '../lib/error-boundary-hoc.jsx';
-import {
-    getIsError,
-    getIsShowingProject
-} from '../reducers/project-state';
+import {getIsError, getIsShowingProject} from '../reducers/project-state';
 import {
     activateTab,
     BLOCKS_TAB_INDEX,
@@ -22,8 +19,12 @@ import {
     closeCostumeLibrary,
     closeBackdropLibrary,
     closeTelemetryModal,
-    openExtensionLibrary
+    openExtensionLibrary,
+    openLoadingProject,
+    closeLoadingProject
 } from '../reducers/modals';
+
+import {setFullScreen} from '../reducers/mode';
 
 import FontLoaderHOC from '../lib/font-loader-hoc.jsx';
 import LocalizationHOC from '../lib/localization-hoc.jsx';
@@ -39,14 +40,48 @@ import cloudManagerHOC from '../lib/cloud-manager-hoc.jsx';
 import GUIComponent from '../components/gui/gui.jsx';
 import {setIsScratchDesktop} from '../lib/isScratchDesktop.js';
 
+import FirebaseAPI from '../lib/firebase.js';
+
+const firebase = new FirebaseAPI();
+
 class GUI extends React.Component {
+    state = {
+        isPlayerOnly: true
+    };
+
     componentDidMount () {
         setIsScratchDesktop(this.props.isScratchDesktop);
         this.props.onStorageInit(storage);
         this.props.onVmInit(this.props.vm);
+
+        // load project
+        const gameId = window.location.href.match(/[?&]gameId=([^&]+)/);
+        if (gameId) {
+            this.props.onLoadingStarted();
+            firebase
+                .getGame(gameId[1])
+                .then(doc => firebase.loadGameFile(doc.get('filePath')))
+                .then(arr => this.props.vm.loadProject(arr))
+                .then(() => this.props.onLoadingFinished())
+                .catch(error => {
+                    throw new Error(error.message);
+                });
+        }
+
+        // editor mode?
+        const mode = window.location.href.match(/[?&]mode=([^&]+)/);
+        if (!mode || mode[1] !== 'editor') {
+            this.props.setFullScreen();
+        } else {
+            // eslint-disable-next-line react/no-did-mount-set-state
+            this.setState({isPlayerOnly: false});
+        }
     }
     componentDidUpdate (prevProps) {
-        if (this.props.projectId !== prevProps.projectId && this.props.projectId !== null) {
+        if (
+            this.props.projectId !== prevProps.projectId &&
+            this.props.projectId !== null
+        ) {
             this.props.onUpdateProjectId(this.props.projectId);
         }
         if (this.props.isShowingProject && !prevProps.isShowingProject) {
@@ -58,7 +93,8 @@ class GUI extends React.Component {
     render () {
         if (this.props.isError) {
             throw new Error(
-                `Error in Scratch GUI [location=${window.location}]: ${this.props.error}`);
+                `Error in Scratch GUI [location=${window.location}]: ${this.props.error}`
+            );
         }
         const {
             /* eslint-disable no-unused-vars */
@@ -74,6 +110,10 @@ class GUI extends React.Component {
             onVmInit,
             projectHost,
             projectId,
+            onLoadingStarted,
+            onLoadingFinished,
+            // eslint-disable-next-line no-shadow
+            setFullScreen,
             /* eslint-enable no-unused-vars */
             children,
             fetchingProject,
@@ -81,10 +121,13 @@ class GUI extends React.Component {
             loadingStateVisible,
             ...componentProps
         } = this.props;
+
         return (
             <GUIComponent
                 loading={fetchingProject || isLoading || loadingStateVisible}
                 {...componentProps}
+                isFullScreen={this.state.isPlayerOnly}
+                isPlayerOnly={this.state.isPlayerOnly}
             >
                 {children}
             </GUIComponent>
@@ -112,12 +155,16 @@ GUI.propTypes = {
     projectHost: PropTypes.string,
     projectId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     telemetryModalVisible: PropTypes.bool,
-    vm: PropTypes.instanceOf(VM).isRequired
+    vm: PropTypes.instanceOf(VM).isRequired,
+    onLoadingStarted: PropTypes.func,
+    onLoadingFinished: PropTypes.func,
+    setFullScreen: PropTypes.func
 };
 
 GUI.defaultProps = {
     isScratchDesktop: false,
-    onStorageInit: storageInstance => storageInstance.addOfficialScratchWebStores(),
+    onStorageInit: storageInstance =>
+        storageInstance.addOfficialScratchWebStores(),
     onProjectLoaded: () => {},
     onUpdateProjectId: () => {},
     onVmInit: (/* vm */) => {}
@@ -129,11 +176,13 @@ const mapStateToProps = state => {
         activeTabIndex: state.scratchGui.editorTab.activeTabIndex,
         alertsVisible: state.scratchGui.alerts.visible,
         backdropLibraryVisible: state.scratchGui.modals.backdropLibrary,
-        blocksTabVisible: state.scratchGui.editorTab.activeTabIndex === BLOCKS_TAB_INDEX,
+        blocksTabVisible:
+            state.scratchGui.editorTab.activeTabIndex === BLOCKS_TAB_INDEX,
         cardsVisible: state.scratchGui.cards.visible,
         connectionModalVisible: state.scratchGui.modals.connectionModal,
         costumeLibraryVisible: state.scratchGui.modals.costumeLibrary,
-        costumesTabVisible: state.scratchGui.editorTab.activeTabIndex === COSTUMES_TAB_INDEX,
+        costumesTabVisible:
+            state.scratchGui.editorTab.activeTabIndex === COSTUMES_TAB_INDEX,
         error: state.scratchGui.projectState.error,
         isError: getIsError(loadingState),
         isFullScreen: state.scratchGui.mode.isFullScreen,
@@ -142,11 +191,12 @@ const mapStateToProps = state => {
         isShowingProject: getIsShowingProject(loadingState),
         loadingStateVisible: state.scratchGui.modals.loadingProject,
         projectId: state.scratchGui.projectState.projectId,
-        soundsTabVisible: state.scratchGui.editorTab.activeTabIndex === SOUNDS_TAB_INDEX,
-        targetIsStage: (
+        soundsTabVisible:
+            state.scratchGui.editorTab.activeTabIndex === SOUNDS_TAB_INDEX,
+        targetIsStage:
             state.scratchGui.targets.stage &&
-            state.scratchGui.targets.stage.id === state.scratchGui.targets.editingTarget
-        ),
+            state.scratchGui.targets.stage.id ===
+                state.scratchGui.targets.editingTarget,
         telemetryModalVisible: state.scratchGui.modals.telemetryModal,
         tipsLibraryVisible: state.scratchGui.modals.tipsLibrary,
         vm: state.scratchGui.vm
@@ -160,13 +210,15 @@ const mapDispatchToProps = dispatch => ({
     onActivateSoundsTab: () => dispatch(activateTab(SOUNDS_TAB_INDEX)),
     onRequestCloseBackdropLibrary: () => dispatch(closeBackdropLibrary()),
     onRequestCloseCostumeLibrary: () => dispatch(closeCostumeLibrary()),
-    onRequestCloseTelemetryModal: () => dispatch(closeTelemetryModal())
+    onRequestCloseTelemetryModal: () => dispatch(closeTelemetryModal()),
+    onLoadingStarted: () => dispatch(openLoadingProject()),
+    onLoadingFinished: () => dispatch(closeLoadingProject()),
+    setFullScreen: () => dispatch(setFullScreen(true))
 });
 
-const ConnectedGUI = injectIntl(connect(
-    mapStateToProps,
-    mapDispatchToProps,
-)(GUI));
+const ConnectedGUI = injectIntl(
+    connect(mapStateToProps, mapDispatchToProps)(GUI)
+);
 
 // note that redux's 'compose' function is just being used as a general utility to make
 // the hierarchy of HOC constructor calls clearer here; it has nothing to do with redux's

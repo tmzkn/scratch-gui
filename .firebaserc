@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "hareketlen-8266d"
+  },
+  "targets": {
+    "hareketlen-8266d": {
+      "hosting": {
+        "scratch": [
+          "hareketlen-scratch"
+        ]
+      }
+    }
+  }
+}
