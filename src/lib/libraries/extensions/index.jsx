@@ -46,6 +46,9 @@ import gdxforInsetIconURL from './gdxfor/gdxfor-small.svg';
 import gdxforConnectionIconURL from './gdxfor/gdxfor-illustration.svg';
 import gdxforConnectionSmallIconURL from './gdxfor/gdxfor-small.svg';
 
+import hareketlenImage from './hareketlen/hareketlen.png';
+import hareketlenSmallImage from './hareketlen/hareketlen-small.png';
+
 export default [
     {
         name: (
@@ -317,5 +320,24 @@ export default [
             />
         ),
         helpLink: 'https://scratch.mit.edu/vernier'
+    },
+    {
+        name: 'Hareketlen',
+        extensionId: 'hareketlen',
+        collaborator: 'Mehmet Temizkan',
+        iconURL: hareketlenImage,
+        insetIconURL: hareketlenSmallImage,
+        description: (
+            <FormattedMessage
+                defaultMessage="Hareketlen data logger"
+                description="Hareketlen data logger"
+                id="gui.extension.hareketlen.description"
+            />
+        ),
+        featured: true,
+        disabled: false,
+        internetConnectionRequired: true,
+        bluetoothRequired: false,
+        helpLink: 'https://hareketlen.com'
     }
 ];
