@@ -49,6 +49,11 @@ import gdxforConnectionSmallIconURL from './gdxfor/gdxfor-small.svg';
 import hareketlenImage from './hareketlen/hareketlen.png';
 import hareketlenSmallImage from './hareketlen/hareketlen-small.png';
 
+import kinectIconURL from './kinect/kinect.png';
+import kinectInsetIconURL from './kinect/kinect-small.png';
+import kinectConnectionIconURL from './kinect/kinect-illustration.png';
+import kinectConnectionSmallIconURL from './kinect/kinect-small.png';
+
 export default [
     {
         name: (
@@ -338,6 +343,24 @@ export default [
         disabled: false,
         internetConnectionRequired: true,
         bluetoothRequired: false,
+        helpLink: 'https://hareketlen.com'
+    },
+    {
+        name: 'Kinect',
+        extensionId: 'kinect',
+        collaborator: 'Mehmet Temizkan',
+        iconURL: kinectIconURL,
+        insetIconURL: kinectInsetIconURL,
+        description: 'Hareketlerinizi kinect kamerayla algilayin',
+        featured: true,
+        disabled: false,
+        bluetoothRequired: false,
+        internetConnectionRequired: false,
+        launchPeripheralConnectionFlow: true,
+        useAutoScan: false,
+        connectionIconURL: kinectConnectionIconURL,
+        connectionSmallIconURL: kinectConnectionSmallIconURL,
+        connectingMessage: 'Baglaniyor',
         helpLink: 'https://hareketlen.com'
     }
 ];

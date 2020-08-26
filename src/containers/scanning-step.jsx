@@ -18,11 +18,11 @@ class ScanningStep extends React.Component {
         };
     }
     componentDidMount () {
-        this.props.vm.scanForPeripheral(this.props.extensionId);
         this.props.vm.on(
             'PERIPHERAL_LIST_UPDATE', this.handlePeripheralListUpdate);
         this.props.vm.on(
             'PERIPHERAL_SCAN_TIMEOUT', this.handlePeripheralScanTimeout);
+        this.props.vm.scanForPeripheral(this.props.extensionId);
     }
     componentWillUnmount () {
         // @todo: stop the peripheral scan here
@@ -45,10 +45,11 @@ class ScanningStep extends React.Component {
         this.setState({peripheralList: peripheralArray});
     }
     handleRefresh () {
-        this.props.vm.scanForPeripheral(this.props.extensionId);
         this.setState({
             scanning: true,
             peripheralList: []
+        }, () => {
+            this.props.vm.scanForPeripheral(this.props.extensionId);
         });
     }
     render () {
