@@ -140,18 +140,32 @@ const GUIComponent = props => {
         const stageSize = resolveStageSize(stageSizeMode, isFullSize);
 
         return isPlayerOnly ? (
-            <StageWrapper
-                isFullScreen={isFullScreen}
-                isRendererSupported={isRendererSupported}
-                isRtl={isRtl}
-                loading={loading}
-                stageSize={STAGE_SIZE_MODES.large}
-                vm={vm}
+            <Box
+                className={styles.pageWrapper}
+                dir={isRtl ? 'rtl' : 'ltr'}
+                {...componentProps}
             >
+                {connectionModalVisible ? (
+                    <ConnectionModal
+                        vm={vm}
+                    />
+                ) : null}
                 {alertsVisible ? (
                     <Alerts className={styles.alertsContainer} />
                 ) : null}
-            </StageWrapper>
+                <StageWrapper
+                    isFullScreen={isFullScreen}
+                    isRendererSupported={isRendererSupported}
+                    isRtl={isRtl}
+                    loading={loading}
+                    stageSize={STAGE_SIZE_MODES.large}
+                    vm={vm}
+                >
+                    {alertsVisible ? (
+                        <Alerts className={styles.alertsContainer} />
+                    ) : null}
+                </StageWrapper>
+            </Box>
         ) : (
             <Box
                 className={styles.pageWrapper}

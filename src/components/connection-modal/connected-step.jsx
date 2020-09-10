@@ -53,9 +53,9 @@ const ConnectedStep = props => (
                     onClick={props.onCancel}
                 >
                     <FormattedMessage
-                        defaultMessage="Go to Editor"
-                        description="Button to return to the editor"
-                        id="gui.connection.go-to-editor"
+                        defaultMessage="Tamam"
+                        description="Button to return back to the game"
+                        id="gui.connection.ok"
                     />
                 </button>
             </div>
